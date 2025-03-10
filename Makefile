@@ -26,7 +26,8 @@ pytest/az-disruption: check-env
 pytest: pytest/az-disruption
 
 # To install pre-commit to run automatically, add pre-commit to requirements.txt, activate the .venv, then run `pre-commit install`
-pre-commit: venv source .venv/bin/activate; \
+pre-commit: venv
+	source .venv/bin/activate; \
 	pre-commit run -a; \
 	deactivate
 

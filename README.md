@@ -145,6 +145,14 @@ make pytest experiment-template-id={experimentTemplateId} # specify the value fo
 ```
 You can review details of the test, e.g. results of the steady state and hypothesis evaluations, in the CloudWatch log groups associated with the Lambda functions. Both functions will stop executing once the results from an expression or alarm cause the test to fail, so the logs will not include results from any additional expressions or alarms that were not evaluated.
 
+## Precommit
+If working on feature branches, add the pre-commit configuration to your environment.
+```
+make venv
+source .venv/bin/activate
+pre-commit install
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
