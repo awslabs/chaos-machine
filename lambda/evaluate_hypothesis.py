@@ -251,7 +251,7 @@ def lambda_handler(event, context):
                     return {"nextState": "NotSupported"}
         # Alarms
 
-        if "hypothesisAlarms":
+        if hypothesis_alarms:
             if not evaluate_hypothesis_alarm_state_history(
                 hypothesis_alarms,
                 metrics_start_time,
