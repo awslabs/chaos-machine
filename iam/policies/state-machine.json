@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "lambda:InvokeFunction",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${Partition}:lambda:${Region}:${Account}:function:chaos-machine-${project_env}-steady-state",
+        "arn:${Partition}:lambda:${Region}:${Account}:function:chaos-machine-${project_env}-start-experiment",
+        "arn:${Partition}:lambda:${Region}:${Account}:function:chaos-machine-${project_env}-evaluate-hypothesis"
+      ]
+    },
+    {
+      "Sid": "StateMachineCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:DescribeLogGroups",
+        "logs:DescribeResourcePolicies",
+        "logs:GetLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutResourcePolicy",
+        "logs:UpdateLogDelivery"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

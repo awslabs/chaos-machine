@@ -1,0 +1,7 @@
+*terraform*
+*.zip
+.venv
+__pycache__
+.pytest_cache
+python
+lambda/layer/schemas/

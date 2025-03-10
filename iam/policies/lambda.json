@@ -1,0 +1,13 @@
+{
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Sid": "AssumeRoleLambda"
+        }
+    ],
+    "Version": "2012-10-17"
+}

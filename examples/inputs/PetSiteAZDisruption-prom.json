@@ -1,0 +1,24 @@
+{
+    "testId": "0001",
+    "testDescription": "Test the response time and fault rate of the PetSite application during an AZ disruption",
+    "experimentTemplateId": "EXTYy81ZGLGqTUk",
+    "steadyState": {
+        "metrics": [
+            {
+                "Id": "m1",
+                "metricFormat": "Prometheus",
+                "query": "sum(rate(petsite_petsearches_total[2m])) * 60",
+                "step": "1m"
+            },
+            {
+                "Id": "e1",
+                "metricFormat": "Prometheus",
+                "query": "sum(rate(petsite_petsearches_total[2m])) * 60 > bool 100",
+                "step": "1m"
+            }
+        ]
+    },
+    "hypothesis": "steadyState",
+    "lookback": 300,
+    "prometheusUrl": "http://10.1.186.117:31793"
+}
