@@ -1,0 +1,12 @@
+{
+    "testId": "0001",
+    "testDescription": "Test the response time and fault rate of the PetSite application during an AZ disruption",
+    "experimentTemplateId": "EXTYy81ZGLGqTUk",
+    "steadyState": {
+        "alarms": [
+            "PetSiteOkRate"
+        ]
+    },
+    "hypothesis": "steadyState",
+    "lookback": 300
+}

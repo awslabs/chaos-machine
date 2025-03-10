@@ -1,0 +1,100 @@
+{
+    "testId": "0001",
+    "testDescription": "Test the response time and fault rate of the PetSite application during an AZ disruption",
+    "experimentTemplateId": "EXTYy81ZGLGqTUk",
+    "steadyState": {
+        "metrics": [
+        {
+            "Id": "m1",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "AWS/X-Ray",
+                    "MetricName": "ResponseTime",
+                    "Dimensions": [
+                        {
+                            "Name": "GroupName",
+                            "Value": "Default"
+                        },
+                        {
+                            "Name": "ServiceName",
+                            "Value": "PetSite"
+                        },
+                        {
+                            "Name": "ServiceType",
+                            "Value": "AWS::EC2::Instance"
+                        }
+                    ]
+                },
+                "Period": 60,
+                "Stat": "p90"
+            }
+        },
+        {
+            "Id": "m2",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "AWS/X-Ray",
+                    "MetricName": "FaultRate",
+                    "Dimensions": [
+                        {
+                            "Name": "GroupName",
+                            "Value": "Default"
+                        },
+                        {
+                            "Name": "ServiceName",
+                            "Value": "PetSite"
+                        },
+                        {
+                            "Name": "ServiceType",
+                            "Value": "AWS::EC2::Instance"
+                        }
+                    ]
+                },
+                "Period": 60,
+                "Stat": "Average"
+            }
+        },
+        {
+            "Id": "m3",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "AWS/X-Ray",
+                    "MetricName": "OkRate",
+                    "Dimensions": [
+                        {
+                            "Name": "GroupName",
+                            "Value": "Default"
+                        },
+                        {
+                            "Name": "ServiceName",
+                            "Value": "PetSite"
+                        },
+                        {
+                            "Name": "ServiceType",
+                            "Value": "AWS::EC2::Instance"
+                        }
+                    ]
+                },
+                "Period": 60,
+                "Stat": "Average"
+            }
+        },
+        {
+            "Id": "e1",
+            "Expression": "IF(m1 > 0.5, 0, 1)"
+        },
+        {
+            "Id": "e2",
+            "Expression": "IF(100 * m2 > 1, 0, 1)"
+        },
+        {
+            "Id": "e3",
+            "Expression": "IF(100 * m3 < 99, 0, 1)"
+        }
+        ]
+    },
+    "hypothesis": "steadyState",
+    "lookback": 300,
+    "recoveryDelay": 60,
+    "recoveryDuration": 180
+}

@@ -1,0 +1,58 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "fis:GetExperimentTemplate"
+      ],
+      "Resource": "arn:${Partition}:fis:${Region}:${Account}:experiment-template/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AWSLambdaBasicExecutionRole",
+      "Effect": "Allow",
+      "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+      ],
+      "Resource": [
+          "arn:${Partition}:logs:${Region}:${Account}:log-group:/aws/lambda/chaos-machine-${project_env}-steady-state",
+          "arn:${Partition}:logs:${Region}:${Account}:log-group:/aws/lambda/chaos-machine-${project_env}-steady-state:log-stream:*"
+      ]
+    },
+    {
+      "Sid": "AWSLambdaVPCAccessExecutionRole1",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateNetworkInterface",
+        "ec2:DetachNetworkInterface",
+        "ec2:DeleteNetworkInterface"
+      ],
+      "Resource": "arn:${Partition}:ec2:${Region}:${Account}:*"
+    },
+    {
+      "Sid": "AWSLambdaVPCAccessExecutionRole2",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeNetworkInterfaces"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "eks:*Access*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

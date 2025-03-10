@@ -1,0 +1,60 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args:
+          - --allow-missing-credentials
+      - id: fix-byte-order-marker
+        exclude: >
+          (?x)^(
+              .*layers/.* |
+              .*cfn_nag/.*
+          )$
+      - id: requirements-txt-fixer
+        files: requirements(-dev)?.txt
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        entry: bash -c 'codespell "$@" || true' -- # Don't block, just alert
+        verbose: true
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: "v1.96.1"
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_docs
+
+  - repo: https://github.com/ambv/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        args: [--ignore=E501]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        args:
+          [
+            "--profile=black",
+            "--line-length=88",
+            "--multi-line=3",
+            "--use-parentheses",
+            "--trailing-comma",
+          ]

@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "testId",
+    "experimentTemplateId",
+    "steadyState",
+    "hypothesis"
+  ],
+  "dependentRequired": {
+    "recoveryDelay": ["recoveryDuration"],
+    "recoveryDuration": ["recoveryDelay"]
+  },
+  "properties": {
+    "testId": {
+      "type": "string",
+      "description": "A value, preferably unique, for the chaos test ID."
+    },
+    "testDescription": {
+      "type": "string",
+      "description": "An optional description of the chaos test."
+    },
+    "experimentTemplateId": {
+      "type": "string",
+      "description": "The FIS experiment template ID to use in the test."
+    },
+    "steadyState": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "description": "The metrics, expressions, and queries to use to evaluate steady state behavior of the application under test. For CloudWatch metrics, there must be at least one MetricStat and one Expression, but you can use multiple MetricStats in an Expression.",
+          "items": {
+            "type": "object"
+          },
+          "required": ["Id"],
+          "properties": {
+            "Id": {
+              "type": "string",
+              "description": "A unique ID for the metric, expression, or query."
+            },
+            "metricFormat": {
+              "type": "string",
+              "enum": [
+                "CloudWatch",
+                "Prometheus"
+              ],
+              "default": "CloudWatch"
+            },
+            "MetricStat": {
+              "type": "object",
+              "description": "For CloudWatch metrics, see the GetMetricData API for specifications."
+            },
+            "Expression": {
+              "type": "object",
+              "description": "For CloudWatch metrics, see the GetMetricData API for specifications."
+            },
+            "query": {
+              "type": "object",
+              "description": "For Prometheus metrics, the query request using PromQL that will be use with the query_range API. See the Prometheus documentation for specifications."
+            },
+            "step": {
+              "type": "integer",
+              "description": "For Prometheus metrics, the resolution of the query. See the Prometheus documentation for specifications."
+            }
+          }
+        },
+        "alarms": {
+          "type": "array",
+          "description": "The metric and composite alarms to use to evaluate steady state behavior of the application under test. An empty array will return all alarms in the account.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "hypothesis": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "metrics": {
+              "type": "array",
+              "description": "The metrics and expressions to use to evaluate the hypothesis of the application under test. There must be at least one MetricStat and one Expression.",
+              "items": {
+                "type": "object"
+              },
+              "required": ["Id"],
+              "properties": {
+                "Id": {
+                  "type": "string",
+                  "description": "A unique ID for the metric, expression, or query."
+                },
+                "metricFormat": {
+                  "type": "string",
+                  "enum": [
+                    "CloudWatch",
+                    "Prometheus"
+                  ],
+                  "default": "CloudWatch"
+                },
+                "MetricStat": {
+                  "type": "object",
+                  "description": "For CloudWatch metrics, see the GetMetricData API for specifications."
+                },
+                "Expression": {
+                  "type": "object",
+                  "description": "For CloudWatch metrics, see the GetMetricData API for specifications."
+                },
+                "query": {
+                  "type": "object",
+                  "description": "For Prometheus metrics, the query request using PromQL that will be use with the query_range API. See the Prometheus documentation for specifications."
+                },
+                "step": {
+                  "type": "integer",
+                  "description": "For Prometheus metrics, the resolution of the query. See the Prometheus documentation for specifications."
+                }
+              }
+            },
+            "alarms": {
+              "type": "array",
+              "description": "The metric and composite alarms to use to evaluate the hypothesis of the application under test. An empty array will return all alarms in the account",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "type": "string",
+          "const": "steadyState",
+          "description": "Use both the metrics and alarms from steadyState for evaluating the hypothesis."
+        }
+      ]
+    },
+    "lookback": {
+      "type": "integer",
+      "description": "The amount of time in seconds for which the metrics and expressions defined in steadyState.metrics will be retrieved from CloudWatch to evaluate the application under test for steady state behavior.",
+      "minimum": 0,
+      "default": 300
+    },
+    "recoveryDelay": {
+      "type": "integer",
+      "description": "The amount of time in seconds after the FIS experiment is completed to mark the start of recovery for retrieving metrics.",
+      "minimum": 0
+    },
+    "recoveryDuration": {
+      "type": "integer",
+      "description": "The duration of the recovery in seconds.",
+      "minimum": 0
+    },
+    "prometheusUrl": {
+      "type": "string",
+      "description": "The URL of the Prometheus server for any of the Prometheus metrics in `steadyState.metrics` or `hypothesis.metrics`. For example, `http://10.1.186.117:31793`."
+    }
+  }
+}

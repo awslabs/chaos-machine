@@ -1,0 +1,54 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "states:Send*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:Query",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": [
+        "arn:${Partition}:dynamodb:${Region}:${Account}:table/chaos-machine-${project_env}-tests",
+        "arn:${Partition}:dynamodb:${Region}:${Account}:table/chaos-machine-${project_env}-tests/index/chaos-machine-${project_env}-tests-experimentId"
+      ]
+    },
+    {
+      "Sid": "AWSLambdaBasicExecutionRole",
+      "Effect": "Allow",
+      "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+      ],
+      "Resource": [
+          "arn:${Partition}:logs:${Region}:${Account}:log-group:/aws/lambda/chaos-machine-${project_env}-continue-execution",
+          "arn:${Partition}:logs:${Region}:${Account}:log-group:/aws/lambda/chaos-machine-${project_env}-continue-execution:log-stream:*"
+      ]
+    },
+    {
+      "Sid": "AWSLambdaVPCAccessExecutionRole1",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateNetworkInterface",
+        "ec2:DetachNetworkInterface",
+        "ec2:DeleteNetworkInterface"
+      ],
+      "Resource": "arn:${Partition}:ec2:${Region}:${Account}:*"
+    },
+    {
+      "Sid": "AWSLambdaVPCAccessExecutionRole2",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeNetworkInterfaces"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
