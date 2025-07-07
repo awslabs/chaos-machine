@@ -1,10 +1,10 @@
-provider "aws" {
-  region = local.region
+locals {
+  region      = "us-east-1"
+  project_env = "dev"
 }
 
-locals {
-  region      = "us-west-2"
-  project_env = "dev"
+provider "aws" {
+  region = local.region
 }
 
 module "chaos-machine" {

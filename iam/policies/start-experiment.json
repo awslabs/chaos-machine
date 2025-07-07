@@ -48,6 +48,17 @@
         "ec2:DescribeNetworkInterfaces"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "FisServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "*",
+      "Condition": {
+          "StringLike": {
+              "iam:AWSServiceName": "fis.amazonaws.com"
+          }
+      }
     }
   ]
 }
