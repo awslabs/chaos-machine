@@ -1,14 +1,18 @@
 # Chaos Machine
-Chaos Machine is a complete chaos engineering workflow that enables customers to run controlled chaos experiments and test hypotheses related to system behavior. Chaos Machine uses metric and alarm data from both [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) and [Prometheus](https://prometheus.io/) as inputs to evaluate system behavior before, during, and after the experiment. The Chaos Machine provides a simple, consistent way to organize and execute chaos experiments, and is appropriate to use for both building and conducting ad-hoc experiments or integrating into more sophisticated automation pipelines. Chaos Machine uses the [AWS Fault Injection Service](https://docs.aws.amazon.com/fis) (FIS) to run controlled experiments, and [AWS Step Functions](https://aws.amazon.com/step-functions/) and [AWS Lambda](https://aws.amazon.com/lambda/) for orchestration and execution.
+Chaos Machine is a complete chaos engineering workflow that enables customers to run controlled chaos experiments and test hypotheses related to system behavior. Chaos Machine uses metric and alarm data from both [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) and [Prometheus](https://prometheus.io/) as inputs to evaluate system behavior before, during, and after the experiment. The Chaos Machine provides a simple, consistent way to organize and execute chaos experiments, and is appropriate to use for both building and conducting ad-hoc experiments or integrating into more sophisticated automation pipelines. Chaos Machine can use [AWS Fault Injection Service](https://docs.aws.amazon.com/fis/) (FIS) or [AWS Systems Manager](https://aws.amazon.com/systems-manager/) (SSM) to run controlled experiments, and [AWS Step Functions](https://aws.amazon.com/step-functions/) and [AWS Lambda](https://aws.amazon.com/lambda/) for orchestration and execution.
 
 ## Architecture
 ![chaos-machine](_docs/chaos-machine.png)
 
 ## Usage
-* Review the architecture diagram above to understand how the Chaos Machine works, then see the [`examples`](examples) directory for working examples to reference.
-* Create the `chaos-machine` Lambda layer before deploying the stack. This layer also includes the JSON schema for validation, so the layer must be updated whenever the schema is updated.
+* Review the architecture diagram above to understand how the Chaos Machine works, then see the [`examples`](examples) directory for working examples to reference. I recommend copying an example to a separate deployment directory outside of the project repo.
+* Create the `chaos-machine` Lambda layer before deploying the stack. This layer also includes the JSON schema for validation, so the layer must be updated whenever the schema is updated. This must be done from the project directory and requires Python 3.11 is available on the local machine.
 ```bash
+make venv
 make layer/package
+```
+* Deploy the stack from the deployment directory.
+```bash
 terraform apply
 ```
 
@@ -36,17 +40,20 @@ Each execution of the Chaos Machine runs an experiment and tests a hypothesis. I
 
 When defining the metrics and expressions to be used for the `steadyState` and `hypothesis`, I recommend starting by using the [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) Metrics console to create and test example metrics and expressions with the system to be tested, and then using the **Source** tab to view and copy the definitions to the execution input file. You can also use this same approach to create CloudWatch alarms by creating a metric for the alarm, then clicking on the bell icon under **Actions** in the **Graphed metrics** tab to create the alarm. One of the key features of the chaos machine is that it uses the powerful built-in capabilities of both CloudWatch and Prometheus to evaluate the metric data, rather than having to handle that in the application logic. Thus, you're able to take full advantage of both of these tools to build almost unlimited evaluation expressions. If you use Prometheus for your application monitoring, see the [Prometheus](#prometheus) section for details.
 
-A test begins when you start an execution of the state machine. During the **SteadyState** step, a Lambda function will retrieve the measurables defined in `steadyState` for the amount of time specified in the `lookback` to verify that the system has been behaving normally. If the evaluation passes, i.e. the application is in "steady state", the FIS experiment will be started. No measurables are checked during the experiment. Once the experiment is completed, by default, the hypothesis is tested based on data retrieved for the period between the experiment start time and end time. However, if you wish to test your hypothesis during application recovery *after* the experiment ended, you can use `recoveryDelay` and `recoveryDuration` in the execution input so that metric/alarm data will be retrieved for the period starting `recoveryDelay` seconds after the experiment end time and ending `recoveryDuration` seconds later.
+A test begins when you start an execution of the state machine. During the **SteadyState** step, a Lambda function will retrieve the measurables defined in `steadyState` for the amount of time specified in the `lookback` to verify that the system has been behaving normally. If the evaluation passes, i.e. the application is in "steady state", the experiment will be started. No measurables are checked during the experiment. Once the experiment is completed, by default, the hypothesis is tested based on data retrieved for the period between the experiment start time and end time. However, if you wish to test your hypothesis during application recovery *after* the experiment ended, you can use `recoveryDelay` and `recoveryDuration` in the execution input so that metric/alarm data will be retrieved for the period starting `recoveryDelay` seconds after the experiment end time and ending `recoveryDuration` seconds later.
 
 ![chaos-machine-timeline](_docs/chaos-machine-timeline.png)
 
-### FIS experiment template
-The Chaos Machine does not create the FIS experiments used during an execution of the machine. Therefore, you should create the experiment templates before beginning the steps below. See the [FIS User Guide](https://docs.aws.amazon.com/fis/latest/userguide/what-is.html) and the [Chaos Engineering Workshop](https://catalog.workshops.aws/fis-v2/en-US) for details.
+### Experiment templates
+The Chaos Machine can run experiments defined as FIS experiment templates or SSM automation documents, but does not create either. You must create the experiment using one of these formats before beginning the steps below. I recommend using FIS with its built-in actions and scenarios to create experiments whenever possible, including using the `aws:ssm:start-automation-execution` action for custom experiments that you may create using SSM automation documents. However, if you do not have access to FIS, you can create an experiment using SSM automation documents and the Chaos Machine will execute these directly, without FIS. These documents can be reused if/when you get access to FIS. If you have access to FIS in another Region, you can reference the SSM command documents, which are different than automation documents, that the service provides for experiments run on EC2 instances; the names of these documents all start with `AWSFIS`. When including these as part of FIS experiments, as originally intended, you use the `aws:ssm:send-command` action to run them. To use one of these command documents (or another) with Chaos Machine, you can create an automation document that includes a step with the [`aws:runCommand`](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-action-runcommand.html) action and specifies the command document name. See the [FIS User Guide](https://docs.aws.amazon.com/fis/latest/userguide/what-is.html), [Chaos Engineering Workshop](https://catalog.workshops.aws/fis-v2/en-US), [SSM User Guide](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html), and [Systems Manager Automation runbook reference](https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-runbook-reference.html) for details.
 
 ## Examples
 The [`examples`](examples) are intended to provide users references for how to use the module(s), as well as testing/validating changes to the source code of the module. If contributing to the project, please be sure to make any appropriate updates to the relevant examples to allow maintainers to test your changes and to keep the examples up to date for users. Thank you!
 * [Complete](examples/complete/). This example will deploy the chaos machine and required IAM resources.
 * [Prometheus](examples/prometheus/). This modifies the `complete` example to enable using Prometheus metrics. See the [Prometheus](#prometheus) section for details.
+* [Experiments](examples/experiments/). This includes example experiments using both FIS and SSM.
+* [Inputs](examples/inputs/). This includes example [execution inputs](#execution-inputs).
+* [Tests](examples/tests/). This includes example [tests](#pytest).
 
 ### Execution inputs
 To help you get familiar with using the Chaos Machine in a realistic scenario, this project includes example execution inputs and automation (using the `pytest` framework) to run an experiment for the PetAdoptions application that is part of the [Chaos Engineering Workshop](https://catalog.workshops.aws/fis-v2/en-US). You can follow the instructions in the [Bring your own AWS Account](https://catalog.workshops.aws/fis-v2/en-US/environment/bring-your-own) section of the workshop website. Then you can create the [AZ Disruption](https://catalog.workshops.aws/fis-v2/en-US/workshop/005network/510az) experiment from the workshop, simulate [user activity](https://catalog.workshops.aws/fis-v2/en-US/environment/user-simulation/), and try running tests based on the example [inputs](examples/inputs/). There's an example Terraform deployment for the AZ disruption experiment in the [`examples`](examples/experiments/az_disruption/az_disruption.tf).
@@ -129,7 +136,7 @@ helm uninstall prometheus -n prometheus
 ```
 
 ### Running a test
-To run an experiment and test a hypothesis with the Chaos Machine, you provide an input and start an execution of the state machine. You can do this using the [AWS Step Functions console](https://aws.amazon.com/step-functions/), [AWS CLI](https://aws.amazon.com/cli/), or any [AWS SDK](https://aws.amazon.com/developer/tools/). I recommend starting with the [Step Functions console](#step-functions-console) for initial or ad-hoc experimentation, then using a SDK to integrate with your automated testing. There is an example using `pytest` that can be referenced to create automated tests using the chaos machine in [`examples/tests`](examples/tests/).
+To run an experiment and test a hypothesis with the Chaos Machine, you provide an input and start an execution of the state machine. You can do this using the [AWS Step Functions console](https://aws.amazon.com/step-functions/), [AWS CLI](https://aws.amazon.com/cli/), or any [AWS SDK](https://aws.amazon.com/developer/tools/). I recommend starting with the [Step Functions console](#step-functions-console) for initial or ad-hoc experimentation, then using a SDK to integrate with your automated testing. There is an example using `pytest` that can be referenced to create automated tests using the chaos machine in [`examples/tests`](examples/tests/). You can review details of the test, e.g. results of the steady state and hypothesis evaluations, in the CloudWatch log groups associated with the Lambda functions.
 
 #### Step Functions console:
 * Find and select the state machine in the **AWS Step Functions** console.
@@ -138,16 +145,16 @@ To run an experiment and test a hypothesis with the Chaos Machine, you provide a
 * Choose **Start execution**.
 
 #### Pytest
+The example in this project uses a FIS experiment template and does not include an example using a SSM automation document, but it can be easily modified. 
 ```bash
 export ENVIRONMENT={environment} # corresponds to the module variable project_env, e.g. dev
 export AWS_DEFAULT_REGION={region} # set to the AWS region where the chaos machine is deployed, e.g. us-east-1
 make pytest experiment-template-id={experimentTemplateId} # specify the value for the experimentTemplateId in the execution input
 ```
-You can review details of the test, e.g. results of the steady state and hypothesis evaluations, in the CloudWatch log groups associated with the Lambda functions. Both functions will stop executing once the results from an expression or alarm cause the test to fail, so the logs will not include results from any additional expressions or alarms that were not evaluated.
 
 ## Precommit
 If working on feature branches, add the pre-commit configuration to your environment.
-```
+```bash
 make venv
 source .venv/bin/activate
 pre-commit install

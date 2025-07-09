@@ -198,13 +198,6 @@ def lambda_handler(event, context):
             schema = json.load(f)
         validate(instance=event, schema=schema)
 
-        experiment_template = fis.get_experiment_template(
-            id=event["experimentTemplateId"]
-        )
-        logger.info(
-            f"Experiment: {json.dumps(experiment_template, default=datetime_handler, indent=4)}"
-        )
-
         # Metrics
 
         if "metrics" in event["steadyState"]:

@@ -1,0 +1,12 @@
+# Copyright 2025, Amazon Web Services, Inc. or its affiliates. All rights reserved. Amazon Confidential and Trademark. This work is licensed under a Creative Commons Attribution 4.0 International License.
+
+schemaVersion: '0.3'
+description: |-
+  This is a "dummy" example for testing the Chaos Machine using a SSM automation document as the experiment.
+  This is also useful to test the expressions in the hypothesis for false negatives, i.e. the evaluation is resolving to NotSupported even though no faults were injected.
+
+mainSteps:
+  - name: sleep
+    action: aws:sleep
+    inputs:
+      Duration: PT3M

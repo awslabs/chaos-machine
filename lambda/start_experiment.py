@@ -29,16 +29,29 @@ def lambda_handler(event, context):
 
     try:
         client_token = str(uuid.uuid4())
-        experiment = fis.start_experiment(
-            clientToken=client_token,
-            experimentTemplateId=event["Input"]["experimentTemplateId"],
-        )
-        logger.info(
-            f"Experiment: {json.dumps(experiment, default=datetime_handler, indent=4)}"
-        )
+        if "experimentTemplateId" in event["Input"]:
+            experiment = fis.start_experiment(
+                clientToken=client_token,
+                experimentTemplateId=event["Input"]["experimentTemplateId"],
+            )
+            logger.info(
+                f"Experiment: {json.dumps(experiment, default=datetime_handler, indent=4)}"
+            )
+            experiment_type = "FIS"
+            experiment_id = experiment["experiment"]["id"]
+
+        elif "automationDocumentName" in event["Input"]:
+            ssm = boto3.client("ssm")
+            automation = ssm.start_automation_execution(
+                DocumentName=event["Input"]["automationDocumentName"]
+            )
+            experiment_type = "SSM"
+            experiment_id = automation["AutomationExecutionId"]
+
         item = {
             "testId": {"S": event["Input"]["testId"]},
-            "experimentId": {"S": experiment["experiment"]["id"]},
+            "experimentType": {"S": experiment_type},
+            "experimentId": {"S": experiment_id},
             "taskToken": {"S": event["TaskToken"]},
             "executionName": {"S": event["ExecutionName"]},
         }

@@ -11,6 +11,15 @@
     {
       "Effect": "Allow",
       "Action": [
+        "ssm:DescribeAutomationExecutions"
+      ],
+      "Resource": [
+        "arn:${Partition}:ssm:${Region}:${Account}:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "cloudwatch:GetMetricData",
         "cloudwatch:DescribeAlarms",
         "cloudwatch:DescribeAlarmHistory"
