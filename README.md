@@ -145,7 +145,7 @@ To run an experiment and test a hypothesis with the Chaos Machine, you provide a
 * Choose **Start execution**.
 
 #### Pytest
-The example in this project uses a FIS experiment template and does not include an example using a SSM automation document, but it can be easily modified. 
+The example in this project uses a FIS experiment template and does not include an example using a SSM automation document, but it can be easily modified.
 ```bash
 export ENVIRONMENT={environment} # corresponds to the module variable project_env, e.g. dev
 export AWS_DEFAULT_REGION={region} # set to the AWS region where the chaos machine is deployed, e.g. us-east-1
