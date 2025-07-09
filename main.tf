@@ -35,7 +35,7 @@ locals {
         name                  = "continue-execution"
         role_arn              = var.create_iam_roles ? null : var.lambda_continue_execution_role_arn
         permission_principal  = "events.amazonaws.com"
-        permission_source_arn = "arn:${data.aws_partition.current.partition}:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.id}:rule/chaos-machine-${var.project_env}-continue-execution"
+        permission_source_arn = "arn:${data.aws_partition.current.partition}:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.id}:rule/chaos-machine-${var.project_env}-continue-execution-*"
         environment_variables = merge(var.lambda_environment_variables, {
           EXPERIMENTS_TABLE = aws_dynamodb_table.this[0].name
         })
@@ -115,10 +115,10 @@ resource "aws_lambda_permission" "this" {
   source_arn    = each.value.permission_source_arn
 }
 
-resource "aws_cloudwatch_event_rule" "continue_execution" {
+resource "aws_cloudwatch_event_rule" "continue_execution_fis" {
   count       = var.create_chaos_machine ? 1 : 0
-  name        = "chaos-machine-${var.project_env}-continue-execution"
-  description = "Continue experiment"
+  name        = "chaos-machine-${var.project_env}-continue-execution-fis"
+  description = "Continue FIS experiment"
   event_pattern = jsonencode({
     source      = ["aws.fis"],
     detail-type = ["FIS Experiment State Change"],
@@ -130,10 +130,31 @@ resource "aws_cloudwatch_event_rule" "continue_execution" {
   })
 }
 
-resource "aws_cloudwatch_event_target" "continue_execution" {
+resource "aws_cloudwatch_event_target" "continue_execution_fis" {
   count     = var.create_chaos_machine ? 1 : 0
   target_id = "chaos-machine-${var.project_env}-continue-execution"
-  rule      = aws_cloudwatch_event_rule.continue_execution[0].name
+  rule      = aws_cloudwatch_event_rule.continue_execution_fis[0].name
+  arn       = aws_lambda_function.this["continue-execution"].arn
+}
+
+resource "aws_cloudwatch_event_rule" "continue_execution_ssm" {
+  count       = var.create_chaos_machine ? 1 : 0
+  name        = "chaos-machine-${var.project_env}-continue-execution-ssm"
+  description = "Continue SSM experiment"
+  event_pattern = jsonencode({
+    source      = ["aws.ssm"],
+    detail-type = ["EC2 Automation Execution Status-change Notification"],
+    detail = {
+      Status = ["Success", "Cancelled", "Failed", "TimedOut"]
+
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "continue_execution_ssm" {
+  count     = var.create_chaos_machine ? 1 : 0
+  target_id = "chaos-machine-${var.project_env}-continue-execution"
+  rule      = aws_cloudwatch_event_rule.continue_execution_ssm[0].name
   arn       = aws_lambda_function.this["continue-execution"].arn
 }
 
@@ -148,6 +169,7 @@ resource "aws_dynamodb_table" "this" {
     name = "testId"
     type = "S"
   }
+
   attribute {
     name = "experimentId"
     type = "S"
@@ -157,7 +179,7 @@ resource "aws_dynamodb_table" "this" {
     name               = "chaos-machine-${var.project_env}-tests-experimentId"
     hash_key           = "experimentId"
     projection_type    = "INCLUDE"
-    non_key_attributes = ["taskToken"]
+    non_key_attributes = ["taskToken", "experimentType"]
   }
 
   point_in_time_recovery {

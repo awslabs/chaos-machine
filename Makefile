@@ -8,6 +8,7 @@ check-env:
 venv: python-version ?= 3.11
 venv: install-path ?=
 venv:
+	sudo dnf install python$(python-version) -y
 	python$(python-version) -m venv .venv; \
 	source .venv/bin/activate; \
 	if [ -n "$(install-path)" ]; then \

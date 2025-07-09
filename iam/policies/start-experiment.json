@@ -14,6 +14,15 @@
     {
       "Effect": "Allow",
       "Action": [
+        "ssm:StartAutomationExecution"
+      ],
+      "Resource": [
+        "arn:${Partition}:ssm:${Region}:${Account}:automation-definition/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "dynamodb:PutItem"
       ],
       "Resource": "arn:${Partition}:dynamodb:${Region}:${Account}:table/chaos-machine-${project_env}-tests"

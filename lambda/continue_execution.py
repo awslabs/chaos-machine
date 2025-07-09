@@ -29,21 +29,36 @@ def lambda_handler(event, context):
     logger.info(f"boto3 version: {boto3.__version__}")
 
     try:
+        if event["source"] == "aws.fis":
+            experiment_id = event["detail"]["experiment-id"]
+            experiment_type = "FIS"
+            status = event["detail"]["new-state"]["status"]
+            failed_statuses = ["stopped", "failed"]
+            completed_statuses = ["completed"]
+        elif event["source"] == "aws.ssm":
+            experiment_id = event["detail"]["ExecutionId"]
+            experiment_type = "SSM"
+            status = event["detail"]["Status"]
+            failed_statuses = ["Cancelled", "Failed", "TimedOut"]
+            completed_statuses = ["Success"]
+
         item = ddb.query(
             TableName=experiments_table,
             IndexName=f"{experiments_table}-experimentId",
             KeyConditionExpression="experimentId = :experimentId",
-            ExpressionAttributeValues={
-                ":experimentId": {"S": event["detail"]["experiment-id"]}
-            },
+            ExpressionAttributeValues={":experimentId": {"S": experiment_id}},
         )
         logger.info(f"item: {json.dumps(item, default=datetime_handler, indent=4)}")
-        if event["detail"]["new-state"]["status"] in ("stopped", "failed"):
+
+        test_id = item["Items"][0]["testId"]["S"]
+        task_token = item["Items"][0]["taskToken"]["S"]
+
+        if status in failed_statuses:
             deleted_item = ddb.delete_item(
                 TableName=experiments_table,
                 Key={
-                    "testId": {"S": item["Items"][0]["testId"]["S"]},
-                    "experimentId": {"S": item["Items"][0]["experimentId"]["S"]},
+                    "testId": {"S": test_id},
+                    "experimentId": {"S": experiment_id},
                 },
                 ReturnValues="ALL_OLD",
             )
@@ -51,26 +66,22 @@ def lambda_handler(event, context):
                 f"Deleted item from tests table: {json.dumps(deleted_item['Attributes'], default=datetime_handler, indent=4)}"
             )
             sfn.send_task_failure(
-                taskToken=item["Items"][0]["taskToken"]["S"],
+                taskToken=task_token,
                 error="ExperimentStoppedOrFailed",
                 cause=json.dumps(
                     {
-                        "errorMessage": f"Experiment {event['detail']['experiment-id']} was {event['detail']['new-state']['status']}.",
+                        "errorMessage": f"{experiment_type} experiment {experiment_id} status is {status}.",
                         "errorType": "ExperimentStoppedOrFailed",
                     }
                 ),
             )
-            logger.info(
-                f"Sent task failure for {event['detail']['experiment-id']} to Step Functions"
-            )
-        if event["detail"]["new-state"]["status"] == "completed":
+            logger.info(f"Sent task failure for {experiment_id} to Step Functions")
+        elif status in completed_statuses:
             sfn.send_task_success(
-                taskToken=item["Items"][0]["taskToken"]["S"],
-                output=json.dumps({"experimentId": event["detail"]["experiment-id"]}),
+                taskToken=task_token,
+                output=json.dumps({"experimentId": experiment_id}),
             )
-            logger.info(
-                f"Sent task success for {event['detail']['experiment-id']} to Step Functions"
-            )
+            logger.info(f"Sent task success for {experiment_id} to Step Functions")
 
     except Exception as e:
         (

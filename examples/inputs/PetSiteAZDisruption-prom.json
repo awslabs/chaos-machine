@@ -1,7 +1,7 @@
 {
     "testId": "0001",
     "testDescription": "Test the response time and fault rate of the PetSite application during an AZ disruption",
-    "experimentTemplateId": "EXTYy81ZGLGqTUk",
+    "experimentTemplateId": "EXT7zn525j32ff6",
     "steadyState": {
         "metrics": [
             {

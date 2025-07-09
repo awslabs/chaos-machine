@@ -14,6 +14,7 @@ logger.setLevel(os.getenv("LOG_LEVEL"))
 fis = boto3.client("fis")
 cw = boto3.client("cloudwatch")
 ddb = boto3.client("dynamodb")
+ssm = boto3.client("ssm")
 
 experiments_table = os.getenv("EXPERIMENTS_TABLE")
 
@@ -98,7 +99,7 @@ def evaluate_hypothesis_cw_metrics(metrics):
         logger.info("No hypothesis expression found.")
         return False
 
-    return
+    return True
 
 
 def evaluate_hypothesis_prom_metrics(metrics):
@@ -127,7 +128,7 @@ def evaluate_hypothesis_prom_metrics(metrics):
         logger.info("No steady state expression found.")
         return False
 
-    return
+    return True
 
 
 def get_alarm_state_history(alarm, start_time, end_time, type):
@@ -188,9 +189,29 @@ def lambda_handler(event, context):
     logger.info(f"boto3 version: {boto3.__version__}")
 
     try:
-        response = fis.get_experiment(
-            id=event["continueExecutionOutput"]["experimentId"]
-        )
+        if "experimentTemplateId" in event:
+            response = fis.get_experiment(
+                id=event["continueExecutionOutput"]["experimentId"]
+            )
+            start_time = response["experiment"]["startTime"]
+            end_time = response["experiment"]["endTime"]
+
+        elif "automationDocumentName" in event:
+            response = ssm.describe_automation_executions(
+                Filters=[
+                    {
+                        "Key": "ExecutionId",
+                        "Values": [event["continueExecutionOutput"]["experimentId"]],
+                    }
+                ]
+            )
+            start_time = response["AutomationExecutionMetadataList"][0][
+                "ExecutionStartTime"
+            ]
+            end_time = response["AutomationExecutionMetadataList"][0][
+                "ExecutionEndTime"
+            ]
+
         logger.info(
             f"Experiment: {json.dumps(response, default=datetime_handler, indent=4)}"
         )
@@ -199,13 +220,11 @@ def lambda_handler(event, context):
         recovery_duration = event.get("recoveryDuration")
 
         if recovery_delay is not None and recovery_duration is not None:
-            metrics_start_time = response["experiment"]["endTime"] + timedelta(
-                seconds=recovery_delay
-            )
+            metrics_start_time = end_time + timedelta(seconds=recovery_delay)
             metrics_end_time = metrics_start_time + timedelta(seconds=recovery_duration)
         else:
-            metrics_start_time = response["experiment"]["startTime"]
-            metrics_end_time = response["experiment"]["endTime"]
+            metrics_start_time = start_time
+            metrics_end_time = end_time
 
         metrics_end_time_ceil = time_ceil(metrics_end_time, timedelta(minutes=1))
 
