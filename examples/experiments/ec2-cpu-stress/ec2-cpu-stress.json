@@ -1,0 +1,40 @@
+{
+    "testId": "0001",
+    "testDescription": "Test the response time of a mock web app running on an EC2 instance during stress test",
+    "experimentTemplateId": "EXxxxxxxxxxxxxxxx",
+    "steadyState": {
+        "metrics": [
+            {
+                "Id": "m1",
+                "MetricStat": {
+                    "Metric": {
+                        "Namespace": "ChaosExperiments",
+                        "MetricName": "ResponseTime",
+                        "Dimensions": [
+                            {
+                                "Name": "InstanceId",
+                                "Value": "i-xxxxxxxxxxxxxxxxxx"
+                            },
+                            {
+                                "Name": "Service",
+                                "Value": "WebAPI"
+                            },
+                            {
+                                "Name": "AvailabilityZone",
+                                "Value": "us-xxxxxxxxx"
+                            }
+                        ]
+                    },
+                    "Period": 60,
+                    "Stat": "p90"
+                }
+            },
+            {
+                "Id": "e1",
+                "Expression": "IF(m1 > 500, 0, 1)"
+            }
+        ]
+    },
+    "hypothesis": "steadyState",
+    "lookback": 300
+}

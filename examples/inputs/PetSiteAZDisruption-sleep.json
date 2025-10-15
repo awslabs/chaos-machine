@@ -1,0 +1,40 @@
+{
+    "testId": "0001",
+    "testDescription": "Test using a SSM automation document",
+    "automationDocumentName": "ChaosMachineSleep",
+    "steadyState": {
+        "metrics": [
+            {
+                "Id": "m1",
+                "MetricStat": {
+                    "Metric": {
+                        "Namespace": "AWS/X-Ray",
+                        "MetricName": "ResponseTime",
+                        "Dimensions": [
+                            {
+                                "Name": "GroupName",
+                                "Value": "Default"
+                            },
+                            {
+                                "Name": "ServiceName",
+                                "Value": "PetSite"
+                            },
+                            {
+                                "Name": "ServiceType",
+                                "Value": "AWS::EC2::Instance"
+                            }
+                        ]
+                    },
+                    "Period": 60,
+                    "Stat": "p90"
+                }
+            },
+            {
+                "Id": "e1",
+                "Expression": "IF(m1 > 0.5, 0, 1)"
+            }
+        ]
+    },
+    "hypothesis": "steadyState",
+    "lookback": 300
+}
